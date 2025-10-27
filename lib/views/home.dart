@@ -25,6 +25,9 @@ class _MovieListViewState extends State<Home> {
   List<MovieList> movies = [];
   int currentPage = 1;
   bool isLoadingMore = false;
+  bool isSearching = false;
+
+  final TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
@@ -36,7 +39,7 @@ class _MovieListViewState extends State<Home> {
   Future<void> _movie() async {
     final data = await controller.getMovies(page: currentPage);
     setState(() {
-      movies.addAll(data);
+      movies = data;
     });
   }
 
@@ -53,13 +56,53 @@ class _MovieListViewState extends State<Home> {
     });
   }
 
+  Future<void> searchMovies(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        isSearching = false;
+      });
+      await _movie();
+      return;
+    }
+
+    setState(() => isSearching = true);
+    try {
+    final results = await controller.searchMovies(query);
+    setState(() {
+      movies = results;
+    });
+  } catch (e) {
+    print("Error search: $e");
+  }
+
+    final results = await controller.searchMovies(query);
+    setState(() => movies = results);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Movie Watchlist"
+          "Movie"
           ),
+          bottom: PreferredSize(
+            preferredSize: Size.fromHeight(40), 
+            child: TextField(
+              controller: searchController,
+              onChanged: searchMovies,
+              decoration: InputDecoration(
+                hintText: "Cari...",
+                prefixIcon: Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(5),
+                  borderSide: BorderSide.none,
+                )
+              ),
+            )
+            ),
           actions: [
             IconButton(
             onPressed: () {

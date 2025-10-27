@@ -21,4 +21,8 @@ class MovieController {
         );
     }).toList();
   }
+
+  Future<List<MovieList>> searchMovies(String query) async {
+    return await tmdbService.searchMovie(query);
+  }
 }

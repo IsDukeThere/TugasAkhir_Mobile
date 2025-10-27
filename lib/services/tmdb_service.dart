@@ -32,4 +32,17 @@ class TmdbService {
       throw Exception("Gagal mengambil detail film dengan ID $movieId");
     }
   }
+
+  Future<List<MovieList>> searchMovie(String query) async {
+    final search = "https://api.themoviedb.org/3/search/movie?api_key=$apiKey&language=en-US&query=$query&page=1&include_adult=false";
+    final response =  await http.get(Uri.parse(search));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List movies = data['results'];
+      return movies.map((json) => MovieList.fromJson(json)).toList();
+    } else {
+      throw Exception("Gagal mencari film");
+    }
+  }
 }
