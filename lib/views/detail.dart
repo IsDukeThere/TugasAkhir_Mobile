@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:project_akhir/controllers/detail_controller.dart';
 import 'package:project_akhir/model/movie_detail.dart';
+import 'package:project_akhir/model/movie_list.dart';
 import 'package:project_akhir/services/tmdb_service.dart';
 
 class Detail extends StatefulWidget {
+  final MovieList movie;
   final int id;
-  const Detail({super.key, required this.id});
+  const Detail({
+    super.key, 
+    required this.id,
+    required this.movie
+    });
 
   @override
   State<Detail> createState() => _DetailState();
@@ -13,11 +20,37 @@ class Detail extends StatefulWidget {
 
 class _DetailState extends State<Detail> {
   late DetailController controller;
+  late Box<MovieList> watchlistBox;
+  bool isSaved = false;
 
   @override
   void initState() {
     super.initState();
     controller = DetailController(tmdbService: TmdbService());
+    watchlistBox = Hive.box<MovieList>('watchlist');
+    _checkIfSaved();
+  }
+
+  void _checkIfSaved() {
+    setState(() {
+      isSaved = watchlistBox.containsKey(widget.movie.id);
+    });
+  }
+
+  void _toggleWatchlist() {
+    if (isSaved) {
+      watchlistBox.delete(widget.movie.id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("${widget.movie.title} dihapus dari Watchlist")),
+      );
+    } else {
+      watchlistBox.put(widget.movie.id, widget.movie);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("${widget.movie.title} ditambahkan ke Watchlist")),
+      );
+    }
+
+    _checkIfSaved();
   }
 
   @override
@@ -85,6 +118,11 @@ class _DetailState extends State<Detail> {
           );
         }
         ),
+        floatingActionButton: FloatingActionButton.extended(
+        onPressed: _toggleWatchlist,
+        label: Text(isSaved ? "Hapus dari Watchlist" : "Tambah ke Watchlist"),
+        icon: Icon(isSaved ? Icons.check : Icons.add),
+      ),
     );
   }
 }

@@ -152,7 +152,7 @@ class _MovieListViewState extends State<Home> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => Detail(id: m.id),
+                        builder: (context) => Detail(id: m.id, movie: m,),
                       ),
                     );
                   },

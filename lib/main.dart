@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:project_akhir/model/movie_list.dart';
 import 'package:project_akhir/views/login.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Hive.initFlutter();
+  Hive.registerAdapter(MovieListAdapter());
+  await Hive.openBox('users');
+  await Hive.openBox<MovieList>('watchlist');
+
   runApp(const MyApp());
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

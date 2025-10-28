@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:project_akhir/views/register.dart';
 import 'package:project_akhir/widgets/navbar.dart';
 
 class LoginPage extends StatefulWidget {
@@ -32,7 +34,21 @@ class _LoginPageState extends State<LoginPage> {
           ),
           _usernameField(), 
           _passwordField(), 
-          _loginButton(context)],
+          _loginButton(context),
+          Text(
+            "Belum memiliki akun?",
+            style: TextStyle(
+              color: Colors.white
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (context) => Register())
+                );
+          }, child: Text("Daftar"))
+          ],
       ),
     );
   }
@@ -119,27 +135,41 @@ class _LoginPageState extends State<LoginPage> {
     String text = "", username, password;
       username = usernameC.text.trim();
       password = passwordC.text.trim();
+
+      var box = Hive.box('users');
+      if (box.containsKey(username)) {
+    // Ambil password yang tersimpan
+    final savedPassword = box.get(username);
+
+    if (savedPassword == password) {
+      // Login berhasil
+      setState(() {
+        text = "Login Berhasil!";
+        isLoginSuccess = true;
+      });
+
+      // Navigasi ke halaman utama
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => Navbar(name: username)),
+      );
+    } else {
+      // Password salah
+      setState(() {
+        text = "Password salah!";
+        isLoginSuccess = false;
+      });
+    }
+  } else {
+    // Username tidak ditemukan
+    setState(() {
+      text = "Username tidak ditemukan!";
+      isLoginSuccess = false;
+    });
+  }
+
       print("Username : $username");
       print("Password : $password");
-      if(username == "Duki" && password == "123"){
-        //login berhasil
-        setState(() {
-          text = "Login Berhasil!";
-          isLoginSuccess = true;
-        });
-        Navigator.pushReplacement(context, 
-        MaterialPageRoute(
-          builder: (context){
-            return Navbar(name: username,);
-          }
-          ));
-      }else{
-        // login gagal
-        setState(() {
-          text = "Login Gagal";
-          isLoginSuccess = false;
-        });
-      }
 
       SnackBar snackBar = SnackBar(
         backgroundColor: (isLoginSuccess) ? Colors.green : Colors.red,

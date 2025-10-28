@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:project_akhir/views/home.dart';
+import 'package:project_akhir/views/watchlist.dart';
 
 class Navbar extends StatefulWidget {
   final String name;
@@ -19,7 +20,7 @@ class _NavbarState extends State<Navbar> {
   Widget build(BuildContext context) {
     final pages = [
       Home(username: widget.name),
-      // Watchlist(userId: widget.userId),
+      Watchlist(username: widget.name),
       // Profile(username: widget.username),
     ];
 
