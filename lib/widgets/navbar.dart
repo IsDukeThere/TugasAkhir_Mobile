@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:project_akhir/views/home.dart';
+import 'package:project_akhir/views/profil.dart';
 import 'package:project_akhir/views/watchlist.dart';
 
 class Navbar extends StatefulWidget {
@@ -21,7 +22,7 @@ class _NavbarState extends State<Navbar> {
     final pages = [
       Home(username: widget.name),
       Watchlist(username: widget.name),
-      // Profile(username: widget.username),
+      Profil(user: widget.name),
     ];
 
     return Scaffold(

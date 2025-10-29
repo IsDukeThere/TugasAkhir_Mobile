@@ -2,18 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:project_akhir/model/movie_list.dart';
 
-class Watchlist extends StatelessWidget {
+class Watchlist extends StatefulWidget {
   final String username;
   const Watchlist({super.key, required this.username});
 
   @override
-  Widget build(BuildContext context) {
-    final watchlistBox = Hive.box<MovieList>('watchlist');
+  State<Watchlist> createState() => _WatchlistState();
+}
 
+class _WatchlistState extends State<Watchlist> {
+  Future<Box<MovieList>>? watchlistBox;
+
+  @override
+  void initState() {
+    super.initState();
+    watchlistBox = Hive.openBox<MovieList>('watchlist_${widget.username}');
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Box<MovieList>>(
+      future: watchlistBox,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(child: Text("Terjadi kesalahan: ${snapshot.error}")),
+          );
+        }
+
+    final box = snapshot.data!;
     return Scaffold(
-      appBar: AppBar(title: const Text("Watchlist")),
+      appBar: AppBar(title: Text("Watchlist ${widget.username}")),
       body: ValueListenableBuilder(
-        valueListenable: watchlistBox.listenable(),
+        valueListenable: box.listenable(),
         builder: (context, Box<MovieList> box, _) {
           if (box.isEmpty) {
             return const Center(child: Text("Belum ada film di Watchlist"));
@@ -45,4 +73,6 @@ class Watchlist extends StatelessWidget {
       ),
     );
   }
+  );
+}
 }

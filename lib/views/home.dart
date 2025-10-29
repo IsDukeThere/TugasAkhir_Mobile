@@ -83,9 +83,13 @@ class _MovieListViewState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 18, 18, 18),
         title: Text(
-          "Movie"
-          ),
+              "Halo, ${widget.username}",
+              style: TextStyle(fontSize: 18, 
+              fontWeight: FontWeight.bold, 
+              color: Colors.white),
+            ),
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(40), 
             child: TextField(
@@ -116,7 +120,7 @@ class _MovieListViewState extends State<Home> {
 
                 );
             },
-            icon: Icon(Icons.logout, color: Colors.red),
+            icon: Icon(Icons.logout, color: Colors.white),
           ),
           ],
           ),
@@ -152,7 +156,7 @@ class _MovieListViewState extends State<Home> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => Detail(id: m.id, movie: m,),
+                        builder: (context) => Detail(id: m.id, movie: m, username: widget.username,),
                       ),
                     );
                   },
@@ -199,7 +203,7 @@ class MovieCard extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.network(
-              "https:image.tmdb.org/t/p/w500$posterPath",
+              "https://image.tmdb.org/t/p/w500$posterPath",
               fit: BoxFit.cover,
               width: double.infinity,
               height: 200,

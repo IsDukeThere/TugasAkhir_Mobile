@@ -8,10 +8,12 @@ import 'package:project_akhir/services/tmdb_service.dart';
 class Detail extends StatefulWidget {
   final MovieList movie;
   final int id;
+  final String username;
   const Detail({
     super.key, 
     required this.id,
-    required this.movie
+    required this.movie,
+    required this.username
     });
 
   @override
@@ -20,31 +22,38 @@ class Detail extends StatefulWidget {
 
 class _DetailState extends State<Detail> {
   late DetailController controller;
-  late Box<MovieList> watchlistBox;
+  Box<MovieList>? watchlistBox;
   bool isSaved = false;
+  bool boxReady = false;
 
   @override
   void initState() {
     super.initState();
     controller = DetailController(tmdbService: TmdbService());
-    watchlistBox = Hive.box<MovieList>('watchlist');
+    _openUserBox();
+  }
+
+  Future<void> _openUserBox() async {
+    watchlistBox =
+        await Hive.openBox<MovieList>('watchlist_${widget.username}');
     _checkIfSaved();
+    setState(() {});
   }
 
   void _checkIfSaved() {
     setState(() {
-      isSaved = watchlistBox.containsKey(widget.movie.id);
+      isSaved = watchlistBox!.containsKey(widget.movie.id);
     });
   }
 
   void _toggleWatchlist() {
     if (isSaved) {
-      watchlistBox.delete(widget.movie.id);
+      watchlistBox!.delete(widget.movie.id);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("${widget.movie.title} dihapus dari Watchlist")),
       );
     } else {
-      watchlistBox.put(widget.movie.id, widget.movie);
+      watchlistBox!.put(widget.movie.id, widget.movie);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("${widget.movie.title} ditambahkan ke Watchlist")),
       );
