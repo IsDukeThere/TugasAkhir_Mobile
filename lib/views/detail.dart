@@ -7,7 +7,7 @@ import 'package:project_akhir/services/tmdb_service.dart';
 
 class Detail extends StatefulWidget {
   final MovieList movie;
-  final int id;
+    final int id;
   final String username;
   const Detail({
     super.key, 
@@ -82,46 +82,65 @@ class _DetailState extends State<Detail> {
           final movie = snapshot.data!;
           return SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.network("https:image.tmdb.org/t/p/w500${movie.posterPath}",
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: 400,
-                ),
+                Stack(
+                  alignment: Alignment.bottomLeft,
+                  children: [
+                    Image.network("https://image.tmdb.org/t/p/w500${movie.posterPath}",
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 400,
+                    ),
+                  Container(
+                    height: 300,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [Colors.black87, Colors.transparent],
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: EdgeInsets.all(15),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(movie.title,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white
                       ),
                       ),
                       SizedBox(height: 15,),
                       Icon(Icons.star, color: Colors.amber, size: 15),
                       Text(
                         movie.rating.toStringAsFixed(1),
-                        style: TextStyle(color: Colors.black),
+                        style: TextStyle(color: Colors.white),
                       ),
                       Text(
-                        "${movie.runtime.toString()} menit"
+                        "${movie.runtime.toString()} menit",
+                        style: TextStyle(color: Colors.white),
                         ),
                       Text(
-                        "Bahasa : ${movie.language.join(', ')}"
+                        "Bahasa : ${movie.language.join(', ')}",
+                        style: TextStyle(color: Colors.white),
                         ),
                       Text(
-                        "Genre: ${movie.genres.join(', ')}"
+                        "Genre: ${movie.genres.join(', ')}",
+                        style: TextStyle(color: Colors.white),
                         ),
+                      ],
+                  ),
+                  ),
+                ],
+              ),
                       SizedBox(height: 25,),
                       Text(
                         movie.overview
                       )
-                    ],
-                  ),
-                  )
               ],
             ),
           );

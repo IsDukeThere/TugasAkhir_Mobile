@@ -267,7 +267,7 @@ class MovieCard extends StatelessWidget {
                         rating.toStringAsFixed(1),
                         style: TextStyle(color: Colors.white),
                       ),
-                      SizedBox(width: 70,),
+                      Spacer(),
                       Text(
                         formatDate(release),
                         style: TextStyle(color: Colors.white),
