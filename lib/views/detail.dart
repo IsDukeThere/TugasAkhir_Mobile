@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:project_akhir/controllers/detail_controller.dart';
+import 'package:project_akhir/controllers/waktu_controller.dart';
 import 'package:project_akhir/model/movie_detail.dart';
 import 'package:project_akhir/model/movie_list.dart';
+import 'package:project_akhir/model/waktu_tayang.dart';
 import 'package:project_akhir/services/tmdb_service.dart';
 
 class Detail extends StatefulWidget {
@@ -22,25 +24,47 @@ class Detail extends StatefulWidget {
 
 class _DetailState extends State<Detail> {
   late DetailController controller;
+  late ShowtimeController showtimeController;
+  late Future<MovieDetail> _movieDetailFuture;
+
   Box<MovieList>? watchlistBox;
   bool isSaved = false;
   bool boxReady = false;
+
+  String selectedZone = "WIB";
+  String convertedTime = "";
+
+   late WaktuTayang waktuTayang;
 
   @override
   void initState() {
     super.initState();
     controller = DetailController(tmdbService: TmdbService());
+    showtimeController = ShowtimeController();
+    _movieDetailFuture = controller.getMovieDetail(widget.id);
+
+
     _openUserBox();
+
+    waktuTayang = WaktuTayang(
+      movieTitle: widget.movie.title,
+      showTimeUtc: DateTime.utc(2025, 10, 31, 12, 30),
+    );
+
+    _movieDetailFuture = controller.getMovieDetail(widget.id);
+
+    convertedTime =
+        showtimeController.getConvertedShowtime(waktuTayang, selectedZone);
   }
 
-  Future<void> _openUserBox() async {
+    Future<void> _openUserBox() async {
     watchlistBox =
         await Hive.openBox<MovieList>('watchlist_${widget.username}');
     _checkIfSaved();
     setState(() {});
-  }
+    }
 
-  void _checkIfSaved() {
+    void _checkIfSaved() {
     setState(() {
       isSaved = watchlistBox!.containsKey(widget.movie.id);
     });
@@ -55,7 +79,8 @@ class _DetailState extends State<Detail> {
     } else {
       watchlistBox!.put(widget.movie.id, widget.movie);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${widget.movie.title} ditambahkan ke Watchlist")),
+        SnackBar(
+            content: Text("${widget.movie.title} ditambahkan ke Watchlist")),
       );
     }
 
@@ -66,10 +91,13 @@ class _DetailState extends State<Detail> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Detail Film"),
+        title: Text(
+        "Detail Film",
+        style: TextStyle(color: Colors.white),
+        ),
       ),
       body: FutureBuilder<MovieDetail>(
-        future: controller.getMovieDetail(widget.id), 
+        future: _movieDetailFuture,
         builder: (context, snapshot){
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -80,6 +108,7 @@ class _DetailState extends State<Detail> {
           }
 
           final movie = snapshot.data!;
+
           return SingleChildScrollView(
             child: Column(
               children: [
@@ -101,7 +130,7 @@ class _DetailState extends State<Detail> {
                       ),
                     ),
                   ),
-                Padding(
+                  Padding(
                   padding: EdgeInsets.all(15),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,14 +162,69 @@ class _DetailState extends State<Detail> {
                         style: TextStyle(color: Colors.white),
                         ),
                       ],
-                  ),
+                    ),
                   ),
                 ],
               ),
-                      SizedBox(height: 25,),
+                SizedBox(height: 25,),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                      child: Text(
+                        movie.overview,
+                        textAlign: TextAlign.justify,
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                  ),
+                  SizedBox(height: 15,),
+                  Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Jadwal Tayang:",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: ["WIB", "WITA", "WIT", "London"].map((zone) {
+                          return ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                selectedZone = zone;
+                                convertedTime =
+                                    showtimeController.getConvertedShowtime(waktuTayang, zone);
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: selectedZone == zone
+                                  ? Colors.amber
+                                  : Colors.grey.shade800,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(zone),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 10),
                       Text(
-                        movie.overview
-                      )
+                        "Jam tayang: $convertedTime $selectedZone",
+                        style: const TextStyle(
+                          color: Colors.amber,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
               ],
             ),
           );

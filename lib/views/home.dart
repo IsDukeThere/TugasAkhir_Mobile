@@ -83,47 +83,54 @@ class _MovieListViewState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 18, 18, 18),
-        title: Text(
+        title: Row(
+          children: [
+            Text(
               "Halo, ${widget.username}",
               style: TextStyle(fontSize: 18, 
               fontWeight: FontWeight.bold, 
-              color: Colors.white),
+              color: Colors.white
+              ),
             ),
-          bottom: PreferredSize(
-            preferredSize: Size.fromHeight(40), 
-            child: TextField(
-              controller: searchController,
-              onChanged: searchMovies,
-              decoration: InputDecoration(
-                hintText: "Cari...",
-                prefixIcon: Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(5),
-                  borderSide: BorderSide.none,
+            SizedBox(width: 18),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 15),
+                child: TextField(
+                  controller: searchController,
+                  onChanged: searchMovies,
+                  decoration: InputDecoration(
+                    hintText: "Cari...",
+                    prefixIcon: Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(35),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
                 )
               ),
-            )
+              ),
+              SizedBox(width: 5),
+              IconButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context, 
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return LoginPage();
+                      }
+                      ),
+                    );
+                },
+                icon: Icon(Icons.logout, color: Colors.white),
+              ),
+              ],
             ),
-          actions: [
-            IconButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                context, 
-                MaterialPageRoute(
-                  builder: (context) {
-                    return LoginPage();
-                  }
-                  ),
+        ),
 
-                );
-            },
-            icon: Icon(Icons.logout, color: Colors.white),
-          ),
-          ],
-          ),
       body: NotificationListener<ScrollNotification>(
         onNotification: (scrollInfo) {
           if(!isLoadingMore &&

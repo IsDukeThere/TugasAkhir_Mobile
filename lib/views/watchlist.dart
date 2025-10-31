@@ -39,7 +39,11 @@ class _WatchlistState extends State<Watchlist> {
 
     final box = snapshot.data!;
     return Scaffold(
-      appBar: AppBar(title: Text("Watchlist ${widget.username}")),
+      appBar: AppBar(title: Text("Watchlist ${widget.username}",
+      style: TextStyle(
+        color: Colors.white
+        ),
+      )),
       body: ValueListenableBuilder(
         valueListenable: box.listenable(),
         builder: (context, Box<MovieList> box, _) {
@@ -58,8 +62,18 @@ class _WatchlistState extends State<Watchlist> {
                   "https://image.tmdb.org/t/p/w200${m.posterPath}",
                   fit: BoxFit.cover,
                 ),
-                title: Text(m.title),
-                subtitle: Text("Rating: ${m.rating.toStringAsFixed(1)}"),
+                title: Text(
+                  m.title,
+                  style: TextStyle(
+                    color: Colors.white
+                  ),
+                ),
+                subtitle: Text(
+                  "Rating: ${m.rating.toStringAsFixed(1)}",
+                  style: TextStyle(
+                    color: Colors.white
+                  ),
+                ),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () {

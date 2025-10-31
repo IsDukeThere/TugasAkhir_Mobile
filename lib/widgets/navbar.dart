@@ -26,6 +26,7 @@ class _NavbarState extends State<Navbar> {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.black,
       body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
