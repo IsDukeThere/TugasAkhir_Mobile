@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:project_akhir/controllers/movie_controller.dart';
 import 'package:project_akhir/model/movie_list.dart';
+import 'package:project_akhir/services/lokasi_service.dart';
 import 'package:project_akhir/services/tmdb_service.dart';
 import 'package:project_akhir/views/detail.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +12,8 @@ String formatDate(String dateString) {
   final date = DateTime.parse(dateString);
   return DateFormat("dd MMM yyyy").format(date);
 }
+
+enum MovieViewMode { popular, byLanguage, search }
 
 class Home extends StatefulWidget {
   final String username;
@@ -27,20 +30,46 @@ class _MovieListViewState extends State<Home> {
   bool isLoadingMore = false;
   bool isSearching = false;
 
+  String? userCountry;
+  bool isRegionLoading = false;
+
   final TextEditingController searchController = TextEditingController();
+
+  MovieViewMode _currentMode = MovieViewMode.popular;
 
   @override
   void initState() {
     super.initState();
     controller = MovieController(tmdbService: TmdbService());
     _movie();
+    _getUserCountry();
   }
 
   Future<void> _movie() async {
+    setState(() {
+      isRegionLoading = true;
+      _currentMode = MovieViewMode.popular;
+      currentPage = 1;
+    });
+
     final data = await controller.getMovies(page: currentPage);
     setState(() {
       movies = data;
+      isRegionLoading = false;
     });
+  }
+
+  Future<void> _getUserCountry() async {
+    try {
+      final location = await LokasiService.getUserLocation();
+      setState(() {
+        userCountry = location['country'];
+      });
+    } catch (e) {
+      setState(() {
+        userCountry = 'Unknown';
+      });
+    }
   }
 
   Future<void> _loadMore() async {
@@ -48,7 +77,21 @@ class _MovieListViewState extends State<Home> {
     setState(() => isLoadingMore = true);
 
     currentPage++;
-    final data = await controller.getMovies(page: currentPage);
+    List<MovieList> data = [];
+
+    try {
+      if (_currentMode == MovieViewMode.popular) {
+        data = await controller.getMovies(page: currentPage);
+
+      } else if (_currentMode == MovieViewMode.byLanguage) {
+        data = await controller.getMoviesSortedByUserLanguage(page: currentPage);
+
+      } else if (_currentMode == MovieViewMode.search) {
+        data = await controller.searchMovies(searchController.text, page: currentPage);
+      }
+    } catch (e) {
+      print("Error loading more data: $e");
+    }
 
     setState(() {
       movies.addAll(data);
@@ -58,26 +101,51 @@ class _MovieListViewState extends State<Home> {
 
   Future<void> searchMovies(String query) async {
     if (query.isEmpty) {
-      setState(() {
-        isSearching = false;
-      });
+      setState(() => isSearching = false);
       await _movie();
       return;
     }
 
-    setState(() => isSearching = true);
-    try {
-    final results = await controller.searchMovies(query);
     setState(() {
-      movies = results;
+      isSearching = true;
+      isRegionLoading = true;
+      _currentMode = MovieViewMode.search;
+      currentPage = 1;
     });
-  } catch (e) {
-    print("Error search: $e");
+
+    try {
+      final results = await controller.searchMovies(query, page: currentPage);
+      setState(() {
+        movies = results;
+        isRegionLoading = false;
+      });
+    } catch (e) {
+      print("Error search: $e");
+      setState(() => isRegionLoading = false);
+    }
   }
 
-    final results = await controller.searchMovies(query);
-    setState(() => movies = results);
+  Future<void> _loadMoviesByRegion() async {
+    setState(() {
+      isRegionLoading = true;
+      _currentMode = MovieViewMode.byLanguage;
+      currentPage = 1;
+      searchController.clear();
+      isSearching = false;
+    });
+
+    try {
+      final data = await controller.getMoviesSortedByUserLanguage(page: currentPage);
+      setState(() {
+        movies = data;
+        isRegionLoading = false;
+      });
+    } catch (e) {
+      print("Error loading movies by region: $e");
+      setState(() => isRegionLoading = false);
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -140,36 +208,82 @@ class _MovieListViewState extends State<Home> {
           }
           return false;
         },
-        child: movies.isEmpty
-          ? Center(child: CircularProgressIndicator())
-          : GridView.builder(
-              padding: EdgeInsets.all(15),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 15,
-                crossAxisSpacing: 15,
-                childAspectRatio: 0.65,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      setState(() => isRegionLoading = true);
+                      await _movie();
+                      setState(() => isRegionLoading = false);
+                    },
+                    child: Text("Semua Film"),
+                  ),
+                  SizedBox(width:15,),
+                  ElevatedButton.icon(
+                    onPressed: _loadMoviesByRegion,
+                    label: Text(userCountry == null
+                        ? "Berdasarkan Lokasi..."
+                        : "Film dari $userCountry"),
+                  ),
+                ],
               ),
-              itemCount: movies.length,
-              itemBuilder: (context, index) {
-                final m = movies[index];
-                return MovieCard(
-                  title: m.title,
-                  posterPath: m.posterPath,
-                  rating: m.rating,
-                  release: m.releaseDate,
-                  id: m.id,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Detail(id: m.id, movie: m, username: widget.username,),
-                      ),
-                    );
-                  },
-                );
-              },
             ),
+            Expanded(
+              child: isRegionLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : movies.isEmpty
+                      ? Center(
+                        child: Text(
+                            "Tidak ada film ditemukan",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                      )
+                      : GridView.builder(
+                          padding: EdgeInsets.all(15),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 15,
+                            crossAxisSpacing: 15,
+                            childAspectRatio: 0.65,
+                          ),
+                          itemCount: movies.length,
+                          itemBuilder: (context, index) {
+                            final m = movies[index];
+                            return MovieCard(
+                              title: m.title,
+                              posterPath: m.posterPath,
+                              rating: m.rating,
+                              release: m.releaseDate,
+                              id: m.id,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Detail(
+                                      id: m.id,
+                                      movie: m,
+                                      username: widget.username,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+            ),
+            if (isLoadingMore)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              SizedBox(height: 10),
+          ],
+        ),
         ),
     );
   }

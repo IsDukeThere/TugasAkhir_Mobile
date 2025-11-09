@@ -1,4 +1,5 @@
 import 'package:project_akhir/model/movie_list.dart';
+import 'package:project_akhir/services/lokasi_service.dart';
 import 'package:project_akhir/services/tmdb_service.dart';
 
 class MovieController {
@@ -17,12 +18,26 @@ class MovieController {
         overview:  movies.overview, 
         posterPath:  movies.posterPath, 
         releaseDate:  movies.releaseDate, 
-        rating:  movies.rating
+        rating:  movies.rating,
+        languageCode: movies.languageCode
         );
     }).toList();
   }
 
-  Future<List<MovieList>> searchMovies(String query) async {
-    return await tmdbService.searchMovie(query);
+  Future<List<MovieList>> getMoviesSortedByUserLanguage({int page = 1}) async {
+    final location = await LokasiService.getUserLocation();
+    final String country = location['country'] ?? 'Unknown';
+
+    final String languageCode = await tmdbService.getLanguageCodeByCountry(country);
+
+    print("Negara: $country | Kode Bahasa: $languageCode | Halaman: $page");
+
+    final filteredMovies = await tmdbService.fetchMoviesByLanguage(languageCode, page: page); 
+
+    return filteredMovies;
+  }
+
+  Future<List<MovieList>> searchMovies(String query, {int page = 1}) async {
+    return await tmdbService.searchMovie(query, page: page);
   }
 }

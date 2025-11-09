@@ -23,6 +23,7 @@ class MovieListAdapter extends TypeAdapter<MovieList> {
       posterPath: fields[2] as String,
       releaseDate: fields[4] as String,
       rating: fields[5] as double,
+      languageCode: fields[6] as String,
     );
   }
 

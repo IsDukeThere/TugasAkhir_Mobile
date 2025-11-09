@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:project_akhir/model/movie_list.dart';
+import 'package:project_akhir/views/detail.dart';
 
 class Watchlist extends StatefulWidget {
   final String username;
@@ -33,7 +34,11 @@ class _WatchlistState extends State<Watchlist> {
 
         if (snapshot.hasError) {
           return Scaffold(
-            body: Center(child: Text("Terjadi kesalahan: ${snapshot.error}")),
+            body: Center(child: Text(
+              "Terjadi kesalahan: ${snapshot.error}",
+              style:TextStyle(color: Colors.white),
+              )
+            ),
           );
         }
 
@@ -48,7 +53,11 @@ class _WatchlistState extends State<Watchlist> {
         valueListenable: box.listenable(),
         builder: (context, Box<MovieList> box, _) {
           if (box.isEmpty) {
-            return const Center(child: Text("Belum ada film di Watchlist"));
+            return const Center(child: Text(
+              "Belum ada film di Watchlist",
+              style:TextStyle(color: Colors.white),
+              )
+            );
           }
 
           final movies = box.values.toList();
@@ -58,6 +67,14 @@ class _WatchlistState extends State<Watchlist> {
             itemBuilder: (context, index) {
               final m = movies[index];
               return ListTile(
+                onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Detail(id: m.id, movie: m, username: widget.username,),
+                      ),
+                    );
+                  },
                 leading: Image.network(
                   "https://image.tmdb.org/t/p/w200${m.posterPath}",
                   fit: BoxFit.cover,

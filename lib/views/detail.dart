@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:project_akhir/controllers/detail_controller.dart';
+import 'package:project_akhir/controllers/uang_controller.dart';
 import 'package:project_akhir/controllers/waktu_controller.dart';
 import 'package:project_akhir/model/movie_detail.dart';
 import 'package:project_akhir/model/movie_list.dart';
 import 'package:project_akhir/model/waktu_tayang.dart';
 import 'package:project_akhir/services/tmdb_service.dart';
+import 'package:project_akhir/services/notifikasi.dart';
 
 class Detail extends StatefulWidget {
   final MovieList movie;
@@ -26,6 +28,10 @@ class _DetailState extends State<Detail> {
   late DetailController controller;
   late ShowtimeController showtimeController;
   late Future<MovieDetail> _movieDetailFuture;
+  late UangController uangController;
+  String selectedCurrency = "IDR";
+  String hargaTiket = "...";
+  
 
   Box<MovieList>? watchlistBox;
   bool isSaved = false;
@@ -36,12 +42,22 @@ class _DetailState extends State<Detail> {
 
    late WaktuTayang waktuTayang;
 
+   void _changeCurrency(String currency) {
+    setState(() {
+      selectedCurrency = currency;
+      hargaTiket = uangController.convert(50000, currency); // misal harga dasar Rp 50.000
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     controller = DetailController(tmdbService: TmdbService());
     showtimeController = ShowtimeController();
     _movieDetailFuture = controller.getMovieDetail(widget.id);
+
+    uangController = UangController();
+    uangController.intiRates();
 
 
     _openUserBox();
@@ -55,6 +71,8 @@ class _DetailState extends State<Detail> {
 
     convertedTime =
         showtimeController.getConvertedShowtime(waktuTayang, selectedZone);
+
+        _initUang();
   }
 
     Future<void> _openUserBox() async {
@@ -70,7 +88,7 @@ class _DetailState extends State<Detail> {
     });
   }
 
-  void _toggleWatchlist() {
+  void _toggleWatchlist() async {
     if (isSaved) {
       watchlistBox!.delete(widget.movie.id);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -82,9 +100,18 @@ class _DetailState extends State<Detail> {
         SnackBar(
             content: Text("${widget.movie.title} ditambahkan ke Watchlist")),
       );
+
+      await showNotification(widget.movie.title);
     }
 
     _checkIfSaved();
+  }
+
+  Future<void> _initUang() async {
+    await uangController.intiRates();
+    setState(() {
+      hargaTiket = uangController.convert(50000, selectedCurrency);
+    });
   }
 
   @override
@@ -144,10 +171,24 @@ class _DetailState extends State<Detail> {
                       ),
                       ),
                       SizedBox(height: 15,),
-                      Icon(Icons.star, color: Colors.amber, size: 15),
-                      Text(
-                        movie.rating.toStringAsFixed(1),
-                        style: TextStyle(color: Colors.white),
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 3, horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(5)
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star, color: Colors.amber, size: 15),
+                            SizedBox(width: 5,),
+                            Text(
+                              movie.rating.toStringAsFixed(1),
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            SizedBox(width: 5,),
+                          ],
+                        ),
                       ),
                       Text(
                         "${movie.runtime.toString()} menit",
@@ -219,6 +260,55 @@ class _DetailState extends State<Detail> {
                           color: Colors.amber,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 30),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Harga Tiket:",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: uangController.availableCurrencies.map((currency) {
+                          return ElevatedButton(
+                            onPressed: () => _changeCurrency(currency),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: selectedCurrency == currency
+                                  ? Colors.amber
+                                  : Colors.grey.shade800,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(currency),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade900,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          "Harga: $hargaTiket",
+                          style: const TextStyle(
+                            color: Colors.amber,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],

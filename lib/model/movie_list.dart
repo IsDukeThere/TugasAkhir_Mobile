@@ -22,6 +22,9 @@ class MovieList {
   @HiveField(5)
   final double rating;
 
+  @HiveField(6)
+  String languageCode;
+
   MovieList({
     required this.id,
     required this.title,
@@ -29,11 +32,7 @@ class MovieList {
     required this.posterPath,
     required this.releaseDate,
     required this.rating,
-    // this.priceIDR = 45000,
-    // this.priceUSD,
-    // this.showtimeWIB = "16:00",
-    // this.showtimeWIT,
-    // this.showtimeWITA,
+    required this.languageCode
   });
 
   factory MovieList.fromJson(Map<String, dynamic> json) {
@@ -43,7 +42,8 @@ class MovieList {
       overview: json['overview'] ?? '', 
       posterPath: json['poster_path'] ?? '', 
       releaseDate: json['release_date'] ?? '', 
-      rating: (json['vote_average'] ?? 0).toDouble()
+      rating: (json['vote_average'] ?? 0).toDouble(),
+      languageCode: (json['original_language'] ?? '')
       );
   }
 
