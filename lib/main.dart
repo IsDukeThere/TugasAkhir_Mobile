@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:project_akhir/model/movie_list.dart';
 import 'package:project_akhir/services/notifikasi.dart';
 import 'package:project_akhir/views/login.dart';
+import 'package:project_akhir/widgets/navbar.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -25,16 +26,19 @@ Future<void> main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(MovieListAdapter());
   await Hive.openBox('users');
+  var sessionBox = await Hive.openBox('session');
   await Hive.openBox<MovieList>('watchlist');
 
-  runApp(const MyApp());
+  runApp(MyApp(sessionBox: sessionBox));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Box sessionBox;
+  const MyApp({super.key, required this.sessionBox});
 
   @override
   Widget build(BuildContext context) {
+    String? activeUser = sessionBox.get('activeUser');
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -44,7 +48,7 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.white),
         )
       ),
-      home: LoginPage(),
+      home: activeUser != null ? Navbar(name: activeUser) : const LoginPage(),
     );
   }
 }
